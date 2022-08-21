@@ -137,6 +137,20 @@ public class Definitions {
 		  RestRequestSpecification =  utils.addParam(strArg1,strArg2,test);
 	    }
 	  
+	   @When("^Mandatory parameter is not passed in the Json$")
+	    public void mandatory_parameter_is_not_passed_in_the_json() throws Throwable {
+		  RestResponse =  utils.sendPostRequest("/v4/bitlinks","{}",test);
+	    }
+
+	    @When("Json is provided with deeplink")
+	    public void json_is_provided_with_deeplink() throws Throwable {
+	    	RestResponse =  utils.sendPostRequest("/v4/bitlinks",utils.getJson("JsonRepository/POSTLink2.json"),test);
+	    }
+	    
+	    @And("^Valid Json is provided$")
+	    public void valid_json_is_provided() throws Throwable {
+	    	RestResponse =  utils.sendPostRequest("/v4/bitlinks",utils.getJson("JsonRepository/POSTLink.json"),test);
+	    }
 
 
 	
@@ -187,6 +201,11 @@ public class Definitions {
 	    	 RestResponse =  utils.sendPostRequest("/v4/bitlinks",null,test);
 		 		Assert.assertEquals(RestResponse.statusCode(),422);
 	    }
+	    
+	    @Then("status code should be 400 for POSTbutlinks")
+	    public void status_code_should_be_400_for_postbutlinks() throws Throwable {
+		 		Assert.assertEquals(RestResponse.statusCode(),400);
+	    }
 
 	    @Then("status code should be 200 for GetSortedBitlinksOfgroup")
 	    public void status_code_should_be_200_for_getsortedbitlinksofgroup() throws Throwable {
@@ -225,6 +244,37 @@ public class Definitions {
 	    	JSONArray arr = utils.returnJsonArrayfromObj(body,"links");
 	    	Assert.assertTrue(arr.size()==Integer.valueOf(strArg1));
 	    }
+	    
+		   @Then("status code should be 402 for POSTbutlinks")
+		    public void status_code_should_be_402_for_postbutlinks() throws Throwable {
+				Assert.assertEquals(RestResponse.statusCode(),402);
+		
+		    }
+		   
+		   @Then("status code should be 200 for POSTbutlinks")
+		    public void status_code_should_be_200_for_postbutlinks() throws Throwable {
+				Assert.assertEquals(RestResponse.statusCode(),200);
+		
+		    }
+		   
+		   @Then("^Error message should be You must upgrade your account to access this resource$")
+		    public void error_message_should_be_you_must_upgrade_your_account_to_access_this_resource() throws Throwable {
+			   String body =   RestResponse.body().asString();
+			   Assert.assertEquals(utils.getSpecificKeyValuefromJsonObject(body, "description"),"You must upgrade your account to access this resource.");
+		   }
+		   
+		   @Then("^The ouput should return the bitlink created$")
+		    public void the_ouput_should_return_the_bitlink_created() throws Throwable {
+			   String body =   RestResponse.body().asString();
+			   String bitlink= utils.getSpecificKeyValuefromJsonObject(body, "link");
+			   Assert.assertTrue(bitlink!=null&&bitlink!=""); 
+		   }
+		   
+		   @Then("^Error message should be You must INVALID_ARG_LONG_URL$")
+		    public void error_message_should_be_you_must_invalidarglongurl() throws Throwable {
+			 	String body =   RestResponse.body().asString();
+		         Assert.assertEquals(utils.getSpecificKeyValuefromJsonObject(body, "message"),"INVALID_ARG_LONG_URL");
+		    }
 	    
 	 
 	//*********************************************************

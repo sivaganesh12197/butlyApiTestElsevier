@@ -1,5 +1,8 @@
 package utilities;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -85,5 +88,22 @@ public class utility {
            returnval.add(links.get(Key).toString());
          }
 		 return returnval;
+	 }
+	 
+	 public String getJson(String path) throws FileNotFoundException, IOException, ParseException
+	 {
+    	 JSONParser parser = new JSONParser();
+         Object obj = parser.parse(new FileReader(path));
+         JSONObject jsonObject = (JSONObject) obj;         
+		 return jsonObject.toString();
+	 }
+	 
+	 public String UpdateJsonandGet(String path,String Key, String Value) throws FileNotFoundException, IOException, ParseException
+	 {
+    	 JSONParser parser = new JSONParser();
+         Object obj = parser.parse(new FileReader(path));
+         JSONObject jsonObject = (JSONObject) obj; 
+         jsonObject =  (JSONObject) jsonObject.put(Key, Value);
+		 return jsonObject.toString();
 	 }
 }
