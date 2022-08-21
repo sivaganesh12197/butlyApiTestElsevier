@@ -1,5 +1,5 @@
 Feature: Get Group by GUID method
-  Return the detail of the specific group with the GUID
+  Retrieve Sorted Bitlinks for Group
 
   @test
   Scenario: Verify status code when Token is not passed
@@ -20,7 +20,7 @@ Feature: Get Group by GUID method
     When Token is passed in header
     Then status code should be 200
     
-     @test
+  @test
   Scenario: Verify the response when not matching guid is given
     Given The GetGroupDetail API is up and running 
     When Token is passed in header 

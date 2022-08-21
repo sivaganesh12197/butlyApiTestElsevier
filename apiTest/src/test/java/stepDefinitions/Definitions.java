@@ -18,13 +18,16 @@ import io.cucumber.java.en.*;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import utilities.*;
 
 public class Definitions {
-	public Response RestResponse;
-	public RequestSpecification RestRequestSpecification;
+	private Response RestResponse;
+	private RequestSpecification RestRequestSpecification;
 	public static ExtentSparkReporter reporter ;
 	public static ExtentReports extent;
 	public ExtentTest test;
+	utility utils = new utility();
+	
 	@BeforeAll
 	public static void beforeAll()
 	{
@@ -81,8 +84,13 @@ public class Definitions {
 
 	    @Given("^The GetGroupDetail API is up and running$")
 	    public void the_getgroupdetail_api_is_up_and_running() throws Throwable {
-	    	createRequest();
+	    	RestRequestSpecification =	utils.createRequest(test);
 	    }  
+	    
+	    @Given("^The GetSortedBitlinksOfgroup API is up and running$")
+	    public void the_getsortedbitlinksofgroup_api_is_up_and_running() throws Throwable {
+	    	RestRequestSpecification =	utils.createRequest(test);
+	    }
 	
 	
 	//*********************************************************
@@ -92,12 +100,22 @@ public class Definitions {
 	
 	  @When("^Header is not passed$")
 	    public void header_is_not_passed() throws Throwable {
-		 RestRequestSpecification =  addHeader(null);
+		 RestRequestSpecification =  utils.addHeader(null,null,test);
 	    }
 	  
 	  @When("^Token is passed in header$")
 	    public void token_is_passed_in_header() throws Throwable {	  
-		  RestRequestSpecification =  RestRequestSpecification.header("Authorization","Bearer e98cdcab4a34d75f040d3909487e9836f6dc04ef");
+		  RestRequestSpecification =  utils.addHeader("Authorization","Bearer e98cdcab4a34d75f040d3909487e9836f6dc04ef",test);
+	    }
+	  
+	  @When("^valid guid and sort value is passed$")
+	    public void valid_guid_and_sort_value_is_passed() throws Throwable {
+		  RestResponse =  utils.sendGetRequest("/v4/groups/Bm8j9wfsBvw/bitlinks/clicks",test);
+	    }
+	  
+	  @When("^invalid guid and correct sort value is passed$")
+	    public void invalid_guid_and_correct_sort_value_is_passed() throws Throwable {
+		  RestResponse =  utils.sendGetRequest("/v4/groups/1232/bitlinks/clicks",test);
 	    }
 	  
 
@@ -110,71 +128,47 @@ public class Definitions {
 	 
 	 @Then("^status code should be 403$")
 	    public void status_code_should_be_403() throws Throwable {
-		 RestResponse =  sendGetRequest("/v4/groups/1223");
+		 RestResponse =  utils.sendGetRequest("/v4/groups/1223",test);
 		Assert.assertEquals(RestResponse.statusCode(),403);
 	    }
 	 
-	 @Then("^status code should be 200$")
+	 @Then("status code should be 200")
 	    public void status_code_should_be_200() throws Throwable {
-		 RestResponse =  sendGetRequest("/v4/groups/Bm8j9wfsBvw");
+		 RestResponse =  utils.sendGetRequest("/v4/groups/Bm8j9wfsBvw",test);
 		Assert.assertEquals(RestResponse.statusCode(),200);
 	    } 
 
 	    @Then("^Error should should be as You are currently forbidden to access this resource$")
 	    public void error_should_should_be_as_you_are_currently_forbidden_to_access_this_resource() throws Throwable {
-	     String body =   RestResponse.body().asString();
-	     JSONParser parser = new JSONParser();
-         Object obj = parser.parse(body);
-         JSONObject jsonObject = (JSONObject) obj;
-         Assert.assertEquals(jsonObject.get("description").toString(),"You are currently forbidden to access this resource.");
+	     String body =   RestResponse.body().asString();	   
+         Assert.assertEquals(utils.getSpecificKeyValuefromJsonObject(body, "description"),"You are currently forbidden to access this resource.");
 	    }
 	    
 	    @Then("^the response should return the group for the \"([^\"]*)\" passed in header$")
 	    public void the_response_should_return_the_group_for_the_guid_passed_in_header(String guid) throws Throwable {
-	    	 RestResponse =  sendGetRequest("/v4/groups/Bm8j9wfsBvw");
+	    	 RestResponse =  utils.sendGetRequest("/v4/groups/Bm8j9wfsBvw",test);
 	    	String body =   RestResponse.body().asString();
-		     JSONParser parser = new JSONParser();
-	         Object obj = parser.parse(body);
-	         JSONObject jsonObject = (JSONObject) obj;
-	         Assert.assertEquals(jsonObject.get("guid").toString(),guid);
+	         Assert.assertEquals(utils.getSpecificKeyValuefromJsonObject(body, "guid"),guid);
 	    }
 
+	    @Then("status code should be 403 for GetSortedBitlinksOfgroup")
+	    public void status_code_should_be_403_for_getsortedbitlinksofgroup() throws Throwable {
+	    	 RestResponse =  utils.sendGetRequest("/v4/groups/3445/bitlinks/clicks",test);
+	 		Assert.assertEquals(RestResponse.statusCode(),403);
+	    }
+
+	    @Then("status code should be 200 for GetSortedBitlinksOfgroup")
+	    public void status_code_should_be_200_for_getsortedbitlinksofgroup() throws Throwable {
+	    	 RestResponse =  utils.sendGetRequest("/v4/groups/Bm8j9wfsBvw/bitlinks/clicks",test);
+		 		Assert.assertEquals(RestResponse.statusCode(),200);
+	    }
 	    
 	 
 	//*********************************************************
 	    //*********************utilities*******************************
 	    //*********************************************************
 	
-	 public void createRequest()
-	 {
-		RestAssured.baseURI = "https://api-ssl.bitly.com";
-     	RestRequestSpecification = RestAssured.given();
-	 }
-	 
-	 public RequestSpecification addHeader(Map<String, String> headers)
-	 {
-		 RestRequestSpecification =(headers!=null)? RestRequestSpecification.headers(headers): RestRequestSpecification;
-	     return RestRequestSpecification;
-	 }
-	 
-	 public RequestSpecification addParam(Map<String, String> param)
-	 {
-		 RestRequestSpecification =(param!=null)? RestRequestSpecification.queryParams(param): RestRequestSpecification;
-	     return RestRequestSpecification;
-	 }
-	 
-	 public Response sendGetRequest(String ResoucePath)
-	 {
-		RestResponse = RestRequestSpecification.when().get(ResoucePath).then().extract().response();
-     	return RestResponse;
-	 }
-	 
-	 public Response sendPostRequest(String ResoucePath,String body)
-	 {
-		RestRequestSpecification = (body!=null)?RestRequestSpecification.body(body): RestRequestSpecification;
- 		RestResponse = RestRequestSpecification.when().body(body).post(ResoucePath).then().extract().response();
-     	return RestResponse;
-	 }
+	
 		
 	        	
 }
