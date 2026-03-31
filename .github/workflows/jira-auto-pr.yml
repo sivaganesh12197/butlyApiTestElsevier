@@ -1,17 +1,25 @@
- name: Jira Trigger Test
+name: Jira Trigger Test
 
 on:
   repository_dispatch:
     types: [jira-tid-trigger]
 
 jobs:
-  test:
+  handle-jira:
     runs-on: ubuntu-latest
 
     steps:
       - name: Print payload
         run: |
-          echo "Ticket: ${{ github.event.client_payload.ticketId }}"
-          echo "Summary: ${{ github.event.client_payload.summary }}"
+          # Capture payload values
+          TICKET="${{ github.event.client_payload.ticketId }}"
+          SUMMARY="${{ github.event.client_payload.summary }}"
+          DESCRIPTION="${{ github.event.client_payload.description }}"
+
+          # Handle empty fields gracefully
+          echo "=== Jira Payload Received ==="
+          echo "Ticket: ${TICKET:-NO TICKET PROVIDED}"
+          echo "Summary: ${SUMMARY:-NO SUMMARY PROVIDED}"
           echo "Description:"
-          echo "${{ github.event.client_payload.description }}"
+          echo "${DESCRIPTION:-NO DESCRIPTION PROVIDED}"
+          echo "============================="
