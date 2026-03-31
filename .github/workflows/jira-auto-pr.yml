@@ -1,0 +1,17 @@
+ name: Jira Trigger Test
+
+on:
+  repository_dispatch:
+    types: [jira-tid-trigger]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print payload
+        run: |
+          echo "Ticket: ${{ github.event.client_payload.ticketId }}"
+          echo "Summary: ${{ github.event.client_payload.summary }}"
+          echo "Description:"
+          echo "${{ github.event.client_payload.description }}"
