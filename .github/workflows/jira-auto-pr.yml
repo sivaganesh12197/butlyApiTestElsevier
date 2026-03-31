@@ -1,25 +1,56 @@
-name: Jira Trigger Test
+name: Jira Trigger Test with JSON Update
 
 on:
   repository_dispatch:
     types: [jira-tid-trigger]
 
 jobs:
-  handle-jira:
+  update-json:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Print payload
-        run: |
-          # Capture payload values
-          TICKET="${{ github.event.client_payload.ticketId }}"
-          SUMMARY="${{ github.event.client_payload.summary }}"
-          DESCRIPTION="${{ github.event.client_payload.description }}"
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-          # Handle empty fields gracefully
-          echo "=== Jira Payload Received ==="
-          echo "Ticket: ${TICKET:-NO TICKET PROVIDED}"
-          echo "Summary: ${SUMMARY:-NO SUMMARY PROVIDED}"
-          echo "Description:"
-          echo "${DESCRIPTION:-NO DESCRIPTION PROVIDED}"
-          echo "============================="
+      - name: Set variables from Jira payload
+        id: vars
+        run: |
+          echo "TICKET=${{ github.event.client_payload.ticketId }}" >> $GITHUB_ENV
+          echo "DESCRIPTION='${{ github.event.client_payload.description }}'" >> $GITHUB_ENV
+
+      - name: Parse ISSN and BGCOLOR from description
+        id: parse
+        run: |
+          ISSN=$(echo "$DESCRIPTION" | grep -oP 'ISSN:\K[0-9]+')
+          BGCOLOR=$(echo "$DESCRIPTION" | grep -oP 'BGCOLOR:\K[A-Z]+')
+          echo "ISSN=$ISSN" >> $GITHUB_ENV
+          echo "BGCOLOR=$BGCOLOR" >> $GITHUB_ENV
+          echo "Parsed ISSN: $ISSN"
+          echo "Parsed BGCOLOR: $BGCOLOR"
+
+      - name: Update config.json
+        run: |
+          CONFIG_PATH="testJson/config.json"
+          jq --arg issn "$ISSN" --arg color "$BGCOLOR" \
+            '.issn=$issn | .bgColor=$color' "$CONFIG_PATH" > tmp.$$.json && mv tmp.$$.json "$CONFIG_PATH"
+          cat "$CONFIG_PATH"
+
+      - name: Create new branch
+        run: |
+          BRANCH="update-${TICKET}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add testJson/config.json
+          git commit -m "Update config.json for $TICKET"
+          git push origin "$BRANCH"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update config.json for ${{ env.TICKET }}"
+          branch: "update-${{ env.TICKET }}"
+          base: main
+          title: "Update config.json for ${{ env.TICKET }}"
+          body: "Automatically updated config.json from Jira ticket ${{ env.TICKET }}"
