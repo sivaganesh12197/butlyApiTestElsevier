@@ -1,4 +1,12 @@
 {
-    "issn":"12345678",
-    "bgColor":""
+ "00086223":
+ {
+    "backgroundColor": "#00275D",
+    "homepageFreeText": "This journal is available now"
+ },
+ "00186223":
+ {
+    "backgroundColor": "#00275D",
+    "homepageFreeText": "This journal is available now"
+ }
 }
